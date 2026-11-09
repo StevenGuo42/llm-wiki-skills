@@ -142,6 +142,17 @@ Obsidian's graph.
 page instead of creating a second one. Also check titles and `aliases`, including aliases in other
 languages.
 
+**Other ingests may be writing to the vault at the same time.** The script takes turns by itself;
+your page edits must be safe too:
+- Glob for the slug right before you create a page, and create it in your very next step.
+- Write whole files only to create new pages. Change an existing page only with Edit, which replaces
+  just the text you name, so other agents' changes elsewhere in the file survive. Never write back a
+  whole page you read earlier, and never change pages with shell redirection or `sed`.
+- If an Edit fails because its text is no longer there, read the page again and redo the edit.
+- At the end of each section, before `done`, run `status` and check that every page you created or
+  updated is in `pagesFromThisSource`. A missing page was overwritten by a parallel ingest: read it
+  and merge your content back in.
+
 **New page.** Write it with this frontmatter. The first line is exactly `---`, with no code fence and
 nothing before it:
 

@@ -4,7 +4,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { execFileSync } from "node:child_process"
+import { execFile, execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import {
   scanInlineArray, getArray, getField, splitFrontmatter, setField, yamlScalar, formatArray,
@@ -338,5 +338,21 @@ test("init fills Obsidian's default graph.json but keeps a customized one", () =
   fs.writeFileSync(graph, JSON.stringify(mine))
   W("init", tmp)
   assert.deepEqual(JSON.parse(fs.readFileSync(graph, "utf8")), mine)
+  fs.rmSync(tmp, { recursive: true, force: true })
+})
+
+test("parallel script calls on one vault don't lose each other's manifest updates", async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "llm-wiki-"))
+  const vault = path.join(tmp, "v")
+  W("init", vault)
+  fs.writeFileSync(path.join(tmp, "a.md"), "# A\n\nsome text\n")
+  const [{ sourcesEntry }] = JSON.parse(W("add", vault, path.join(tmp, "a.md")))
+  const run = (...args) => new Promise((ok, fail) => execFile(process.execPath, [SCRIPT, ...args], (e) => (e ? fail(e) : ok())))
+  const ns = Array.from({ length: 12 }, (_, i) => i + 1)
+  await Promise.all(ns.map((n) => run("done", vault, sourcesEntry, String(n))))
+  assert.deepEqual(JSON.parse(W("status", vault, sourcesEntry)).sectionsDone, ns)
+  assert.equal(fs.existsSync(path.join(vault, ".llm-wiki", "lock")), false)
+  fs.writeFileSync(path.join(vault, ".llm-wiki", "lock"), "999999") // a crashed run's lock doesn't block
+  W("done", vault, sourcesEntry, "13")
   fs.rmSync(tmp, { recursive: true, force: true })
 })

@@ -58,8 +58,12 @@ Always quote paths, since vault names often contain spaces and commas.
 Read `references/ingest.md` in full before ingesting. It covers section-by-section generation of
 long sources, reusing existing pages, merge rules and page format. Ingest extracts knowledge only:
 front and back matter, exercises, worked examples, appendices and filler are skipped unless
-`purpose.md` asks for them. Several sources: ingest them
-**one at a time**, in the order given, so each one sees the pages the earlier ones wrote.
+`purpose.md` asks for them.
+
+Several sources: in the order given. To go faster, run up to 4 sources at once, one agent per source,
+each following `references/ingest.md` (its sections still go in order). Parallel ingests don't see each
+other's newest pages, so run sources with little topic overlap together, and start one when another
+finishes. Tell each agent that other ingests share the vault.
 
 ### Remove a source
 1. `W remove "<vault>" "<source>"` runs as a dry run. It lists the pages it will delete (pages whose

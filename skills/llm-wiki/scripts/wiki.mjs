@@ -421,12 +421,15 @@ export function planSections(text, maxChars = 60000) {
 // ───────────────────────── manifest ─────────────────────────
 
 function readManifest(vault) {
-  try { return JSON.parse(fs.readFileSync(path.join(vault, MANIFEST), "utf8")) } catch { return {} }
+  // only a missing file means "no records": any other read error must not let a write wipe them
+  try { return JSON.parse(fs.readFileSync(path.join(vault, MANIFEST), "utf8")) } catch (e) { if (e.code === "ENOENT") return {}; throw e }
 }
 
 function writeManifest(vault, m) {
-  fs.mkdirSync(path.join(vault, ".llm-wiki"), { recursive: true })
-  fs.writeFileSync(path.join(vault, MANIFEST), JSON.stringify(m, null, 2) + "\n")
+  const file = path.join(vault, MANIFEST)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file + ".tmp", JSON.stringify(m, null, 2) + "\n")
+  fs.renameSync(file + ".tmp", file) // readers never see a half-written file
 }
 
 // ───────────────────────── slugs & summary path ─────────────────────────
@@ -906,10 +909,32 @@ function sourceStatus(vault, identity, file, sectionChars) {
   return out
 }
 
+// Several ingests may share a vault. Commands that write (manifest, index, log, Related blocks) take
+// turns, so no read-modify-write loses another's update.
+const WRITES = new Set(["init", "add", "rename-source", "status", "done", "finalize", "sync", "remove", "log"])
+
+function lockVault(vault) {
+  const lock = path.join(vault, ".llm-wiki", "lock")
+  fs.mkdirSync(path.dirname(lock), { recursive: true })
+  const pause = new Int32Array(new SharedArrayBuffer(4))
+  for (const start = Date.now(); ; Atomics.wait(pause, 0, 0, 100)) {
+    // Windows reports EPERM/EBUSY while a just-deleted lock is still being released
+    try { fs.writeFileSync(lock, String(process.pid), { flag: "wx" }); break } catch (e) { if (!["EEXIST", "EPERM", "EBUSY", "EACCES"].includes(e.code)) throw e }
+    let holder = 0
+    try { holder = Number(fs.readFileSync(lock, "utf8")) } catch { continue }
+    let alive = !holder // a lock with no pid yet is being written right now
+    try { if (holder) { process.kill(holder, 0); alive = true } } catch (e) { alive = e.code === "EPERM" }
+    if (!alive) { fs.rmSync(lock, { force: true }); continue } // left behind by a crashed run
+    if (Date.now() - start > 30 * 60000) die(`vault busy: ${lock} held by process ${holder} for 30 minutes`)
+  }
+  process.on("exit", () => fs.rmSync(lock, { force: true }))
+}
+
 function main(argv) {
   const [cmd, ...args] = argv
   const vault = args[0] && path.resolve(args[0])
   const need = () => { if (!vault) die(`usage: wiki.mjs ${cmd} <vault> ...`) }
+  if (vault && WRITES.has(cmd)) lockVault(vault)
   switch (cmd) {
     case "init": {
       need()
