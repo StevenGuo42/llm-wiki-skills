@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // llm-wiki helper: the deterministic half of the llm-wiki skill. Claude reads sources and
 // writes pages; this script does bookkeeping that must not depend on the model.
+// Pattern: Andrej Karpathy's LLM Wiki, https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 // Layout is compatible with nashsu/llm_wiki: purpose.md, schema.md, raw/sources/, wiki/<type>/.
 // Zero dependencies (Node >= 18). pdftotext (poppler) is used for PDFs when available.
 //

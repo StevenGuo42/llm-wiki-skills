@@ -3,9 +3,10 @@
 Version 0.1.0
 
 Builds and maintains an LLM-written knowledge graph from your own sources (PDFs, papers, books,
-articles, notes) as an Obsidian vault. It follows Karpathy's "LLM Wiki" idea and the
-[nashsu/llm_wiki](https://github.com/nashsu/llm_wiki) desktop app's vault layout, so the same vault
-opens in Obsidian and in the app.
+articles, notes) as an Obsidian vault. It follows Andrej Karpathy's
+[LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) idea and the
+[LLM Wiki desktop app](https://github.com/nashsu/llm_wiki)'s vault layout by Yong Su (nashsu), so the
+same vault opens in Obsidian and in the app.
 
 Claude reads each source and writes the pages. A small Node script, `llm-wiki/scripts/wiki.mjs`
 (no dependencies), does the bookkeeping that has to be exact: importing, text extraction, finding
@@ -77,6 +78,13 @@ the same behaviour:
 ```bash
 node --test llm-wiki/scripts/wiki.test.mjs
 ```
+
+## Credits
+
+- [Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): the LLM Wiki
+  pattern (raw sources → an LLM-maintained wiki → a schema that governs it).
+- [Yong Su (nashsu)](https://github.com/nashsu/llm_wiki): the LLM Wiki desktop app, whose vault layout,
+  schema template, source-page naming and ingest design this skill follows and partly ports.
 
 ## License
 
