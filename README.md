@@ -4,6 +4,8 @@ Builds and maintains an LLM-written knowledge graph from your own sources (PDFs,
 articles, notes) as an Obsidian vault. The vault uses the same layout as the
 [LLM Wiki desktop app](https://github.com/nashsu/llm_wiki), so it opens in both.
 
+![Obsidian graph view of a finance wiki built with this skill, with the momentum page and its links highlighted](docs/graph.png)
+
 ## Install
 
 In Claude Code:
@@ -33,7 +35,11 @@ Then open the vault in Obsidian and press Ctrl/Cmd+G for the graph.
 
 ## What it does
 
-- Ingests many sources one after another; long sources section by section, resumable.
+- Sets up a vault from one of the LLM Wiki app's templates (general, research, reading, personal
+  growth, business) or from a purpose and page types you design, and won't ingest until `purpose.md`
+  is filled in.
+- Ingests many sources, up to 4 at once (one agent per source); long sources go section by
+  section and can be resumed.
 - Extracts knowledge only: front and back matter, exercises, worked examples and appendices are
   skipped unless `purpose.md` asks for them.
 - Removes a source and the pages only it supports, with a backup in `.llm-wiki/trash/`.
@@ -50,7 +56,7 @@ Then open the vault in Obsidian and press Ctrl/Cmd+G for the graph.
 - [Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): the LLM Wiki
   pattern.
 - [Yong Su (nashsu)](https://github.com/nashsu/llm_wiki): the LLM Wiki desktop app, whose vault layout,
-  schema template and ingest design this skill follows and partly ports.
+  templates and ingest design this skill follows and partly ports.
 
 ## License
 
