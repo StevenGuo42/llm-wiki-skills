@@ -197,10 +197,13 @@ and a source with no earlier record, merge. A fresh rewrite is usually shorter a
   leave the section out; don't write an illustrative one. Code the schema asks for (e.g. a method's
   implementation) is allowed if it follows the source's formula exactly and is labelled as derived.
 - Keep exact tables, formulas, schemas and code verbatim, in code blocks or tables. Extracted PDF text
-  often garbles formulas (lost fractions, subscripts, ≠). When one looks broken, re-extract those
-  pages with layout kept: `pdftotext -f <page> -l <page> -layout "<original pdf>" -`. (The Read
-  tool's `pages` option also works on PDFs, but only where `pdftoppm` is installed.) If it still can't
-  be recovered, write what you are sure of and add exactly this line under it:
+  often garbles formulas (lost fractions, subscripts, ≠) and drops equations stored as images. When
+  one looks broken or missing, look at the page itself:
+  `pdftoppm -f <page> -l <page> -r 110 -singlefile -png "<original pdf>" "<vault>/.llm-wiki/tmp/p"`,
+  then Read `p.png` as an image and copy from it. The text file has a form feed between PDF pages, so
+  `awk 'BEGIN{RS="\f"} /EQ 3-4/{print NR; exit}' "<text file>"` prints the page holding a string.
+  Without `pdftoppm`, try `pdftotext -f <page> -l <page> -layout "<original pdf>" -`. If it still
+  can't be recovered, write what you are sure of and add exactly this line under it:
   `> [!warning] Formula reconstructed; check against the source.`
 - An entity page opens by saying what the subject is. If the source doesn't establish that, use only
   stable, well-known public facts, labelled as background. If identity is still unclear, don't

@@ -16,8 +16,9 @@ On Claude Code older than 2.1.275, run `/plugin marketplace add StevenGuo42/llm-
 `/plugin install llm-wiki@llm-wiki-skills`. Or copy the skill by hand:
 `cp -r skills/llm-wiki ~/.claude/skills/llm-wiki`.
 
-Requirements: Node 18+, and `pdftotext` for PDFs (`brew install poppler`, `apt install poppler-utils`;
-on Windows the copy bundled with Git for Windows works).
+Requirements: Node 18+, and poppler for PDFs (`brew install poppler`, `apt install poppler-utils`,
+`winget install oschwartz10612.Poppler`). `pdftotext` extracts the text; `pdftoppm` lets Claude look at
+pages whose equations or tables are images. Git for Windows bundles `pdftotext` only.
 
 ## Use
 
