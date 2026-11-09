@@ -829,13 +829,22 @@ function mergeJson(file, patch, arrayUnion = []) {
   fs.writeFileSync(file, JSON.stringify(next, null, 2) + "\n")
 }
 
-export function init(vault, name) {
+// True while purpose.md holds no line of its own: every non-blank line apart from headings comes from a template.
+export function purposeUnfilled(vault) {
+  const file = path.join(vault, "purpose.md")
+  if (!fs.existsSync(file)) return true
+  const lines = (t) => t.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith("#"))
+  const known = new Set(fs.readdirSync(TEMPLATES).flatMap((d) => lines(fs.readFileSync(path.join(TEMPLATES, d, "purpose.md"), "utf8"))))
+  return lines(fs.readFileSync(file, "utf8")).every((l) => known.has(l))
+}
+
+export function init(vault, name, template = "general") {
   fs.mkdirSync(vault, { recursive: true })
   const created = []
   const copyTemplate = (file) => {
     const dest = path.join(vault, file)
     if (fs.existsSync(dest)) return
-    fs.writeFileSync(dest, fs.readFileSync(path.join(TEMPLATES, file), "utf8").replaceAll("{{NAME}}", name))
+    fs.writeFileSync(dest, fs.readFileSync(path.join(TEMPLATES, template, file), "utf8").replaceAll("{{NAME}}", name))
     created.push(file)
   }
   copyTemplate("purpose.md")
@@ -895,6 +904,7 @@ function sourceStatus(vault, identity, file, sectionChars) {
   const manifest = readManifest(vault)
   const rec = manifest[identity] || {}
   const out = { identity, file: file && toPosix(path.relative(vault, file)) }
+  if (purposeUnfilled(vault)) out.purposeUnfilled = true
   if (file) {
     const { cache, how, reason } = extractText(file)
     if (reason) out.extractionProblem = reason
@@ -955,7 +965,10 @@ function main(argv) {
     case "init": {
       need()
       const name = flag(args, "--name", path.basename(vault))
-      console.log(JSON.stringify(init(vault, name), null, 2))
+      const template = flag(args, "--template", "general")
+      const templates = fs.readdirSync(TEMPLATES)
+      if (!templates.includes(template)) die(`unknown template "${template}"; one of: ${templates.join(", ")}`)
+      console.log(JSON.stringify(init(vault, name, template), null, 2))
       break
     }
     case "add": {
@@ -1115,7 +1128,8 @@ function main(argv) {
     }
     default:
       console.log(`usage: node wiki.mjs <command> <vault> ...
-  init <vault> [--name N]              create or upgrade a vault (purpose, schema, dirs, Obsidian graph)
+  init <vault> [--name N] [--template T]  create or upgrade a vault (purpose, schema, dirs, Obsidian graph);
+                                       T: general (default), research, reading, personal, business
   add <vault> <file|folder>...         copy into raw/sources (skips duplicates), extract text, plan sections
   status <vault> <source>              same report for a source already in raw/sources
   mentions <vault> <source> [--section N]  existing pages from other sources named in the text

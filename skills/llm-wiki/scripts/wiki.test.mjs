@@ -365,3 +365,20 @@ test("parallel script calls on one vault don't lose each other's manifest update
   W("done", vault, sourcesEntry, "13")
   fs.rmSync(tmp, { recursive: true, force: true })
 })
+
+test("init --template; add flags purpose.md until it has a line of its own", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "llm-wiki-"))
+  const vault = path.join(tmp, "v")
+  W("init", vault, "--name", "Rates", "--template", "research")
+  assert.ok(fs.existsSync(path.join(vault, "wiki/findings")))
+  assert.match(fs.readFileSync(path.join(vault, "purpose.md"), "utf8"), /^# Project Purpose — Rates\n\n## Research Question/)
+  fs.writeFileSync(path.join(tmp, "a.md"), "Term premium.\n")
+  assert.equal(JSON.parse(W("add", vault, path.join(tmp, "a.md")))[0].purposeUnfilled, true)
+  // headings and lines from any template don't count as filled in
+  fs.appendFileSync(path.join(vault, "purpose.md"), "\n## Goal\n\n-\n> TBD\n")
+  assert.equal(JSON.parse(W("status", vault, "a.md")).purposeUnfilled, true)
+  fs.appendFileSync(path.join(vault, "purpose.md"), "\r\nWhy do long rates move? English.\r\n")
+  assert.equal(JSON.parse(W("status", vault, "a.md")).purposeUnfilled, undefined)
+  assert.throws(() => execFileSync(process.execPath, [SCRIPT, "init", path.join(tmp, "w"), "--template", "nope"], { stdio: "pipe" }), /unknown template/)
+  fs.rmSync(tmp, { recursive: true, force: true })
+})

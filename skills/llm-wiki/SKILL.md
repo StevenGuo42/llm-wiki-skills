@@ -30,7 +30,7 @@ Always quote paths, since vault names often contain spaces and commas.
 
 | Command | What it does |
 |---|---|
-| `W init <vault> [--name N]` | New vault, or upgrade an existing one: adds missing purpose/schema/dirs and the Obsidian graph config. Never overwrites existing pages, purpose or schema; only adds missing Obsidian settings |
+| `W init <vault> [--name N] [--template T]` | New vault, or upgrade an existing one: adds missing purpose/schema/dirs and the Obsidian graph config. Never overwrites existing pages, purpose or schema; only adds missing Obsidian settings. `T` picks the starting purpose/schema (see Create a wiki) |
 | `W add <vault> <file-or-folder>... [--name N]` | Copy into raw/sources under a short name (skips a file whose content is already there), extract text, print the ingest plan as JSON |
 | `W rename-source <vault> <source> <short-name>` | Give a source a short name. Moves the file (to the top of raw/sources, so the app names its page after it), its text cache and its source page, and repoints every link and image path |
 | `W status <vault> <source>` | The same plan for a file already in raw/sources (also lists `pagesFromThisSource`) |
@@ -49,16 +49,34 @@ Always quote paths, since vault names often contain spaces and commas.
 
 ### Create a wiki
 1. Ask for the vault folder and the topic, unless they're already given.
-2. `W init "<vault>" --name "<Topic>"`.
-3. Fill in `purpose.md` with the user (goal, reader, output language, key questions, scope). Adapt
-   `schema.md` page types to the domain, for example method/finding/indicator for research. Every
-   type row needs a `wiki/<folder>/` directory. After changing types, re-run `init` to create the folders.
+2. Ask which template to start from. The five templates are the llm_wiki app's. Each has the base page types
+   (entity, concept, source, query, comparison, synthesis, overview) plus its own:
+
+   | Choice | For | Own page types |
+   |---|---|---|
+   | `general` | anything | none |
+   | `research` | one research question, with a working thesis | thesis, methodology, finding |
+   | `reading` | one book: characters, themes, plot threads | character, theme, plot-thread, chapter |
+   | `personal` | goals, habits, reflections, a journal | goal, habit, reflection, journal |
+   | `business` | a team's meetings, decisions, projects | meeting, decision, project, stakeholder |
+   | Custom | the user designs the purpose sections and page types | their choice |
+
+   Use a multiple-choice question if you have one. If it caps the number of choices, offer the three
+   templates closest to the topic plus Custom, and name the others in the question.
+3. `W init "<vault>" --name "<Topic>" --template <choice>`. Custom uses `general`.
+4. Fill in `purpose.md` with the user: go through its sections, and always get the reader and the
+   output language. For Custom, also design `schema.md` with them: page types, folders, extra
+   frontmatter fields, naming. Keep the `## Page Types` table format and the base types, then re-run
+   `init` to create the new folders. Every type row needs a `wiki/<folder>/` directory.
 
 ### Add sources: follow `references/ingest.md`
 Read `references/ingest.md` in full before ingesting. It covers section-by-section generation of
 long sources, reusing existing pages, merge rules and page format. Ingest extracts knowledge only:
 front and back matter, exercises, worked examples, appendices and filler are skipped unless
 `purpose.md` asks for them.
+
+`add` and `status` report `purposeUnfilled: true` while `purpose.md` has nothing the user wrote (it is
+still a template). Then do step 4 of Create a wiki before any ingest or agent starts.
 
 Several sources: in the order given. To go faster, run up to 4 sources at once, one agent per source,
 each following `references/ingest.md` (its sections still go in order). Parallel ingests don't see each

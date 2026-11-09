@@ -34,6 +34,13 @@ The JSON gives you, per source:
 | `sourceChanged` | `true` only if this source was ingested before with different content |
 | `pagesFromThisSource` | pages that already cite this source (a re-ingest or resume) |
 | `note` | "already in sources": a duplicate wasn't copied, and the existing copy is used |
+| `purposeUnfilled` | present (`true`) only while `purpose.md` has nothing the user wrote |
+
+**`purposeUnfilled` stops the ingest before any page is written.** Without a filled-in purpose there is
+no goal, scope or output language to follow. Set up `purpose.md` with the user first (SKILL.md, Create
+a wiki, step 4), then run `status` again. If the user wants to skip that, write the goal, reader and
+output language from what they've told you and the sources, show them, and continue. If you can't ask
+the user (you are a subagent), stop and report it.
 
 If `extraction` is `needs-text`, `extractionProblem` says why (a scanned PDF, docx, epub, missing
 `pdftotext`, …). Produce the text yourself: read the file with your tools, write plain text to the
