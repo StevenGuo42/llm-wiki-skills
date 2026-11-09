@@ -6,6 +6,19 @@ articles, notes) as an Obsidian vault. The vault uses the same layout as the
 
 ![Obsidian graph view of a finance wiki built with this skill, with the momentum page and its links highlighted](docs/graph.png)
 
+## What it does
+
+- Sets up a vault from one of the LLM Wiki app's templates (general, research, reading, personal
+  growth, business) or from a purpose and page types you design, and won't ingest until `purpose.md`
+  is filled in.
+- Ingests many sources, up to 4 at once (one agent per source); long sources go section by
+  section and can be resumed.
+- Extracts knowledge only: front and back matter, exercises, worked examples and appendices are
+  skipped unless `purpose.md` asks for them.
+- Removes a source and the pages only it supports, with a backup in `.llm-wiki/trash/`.
+- Keeps the Obsidian graph connected and lints frontmatter, broken links and duplicate names.
+- Only adds to a vault: text that the app or you wrote is never rewritten.
+
 ## Install
 
 In Claude Code:
@@ -32,19 +45,6 @@ Ask Claude in plain language:
 - "Make my wiki's graph show up in Obsidian" / "lint my wiki"
 
 Then open the vault in Obsidian and press Ctrl/Cmd+G for the graph.
-
-## What it does
-
-- Sets up a vault from one of the LLM Wiki app's templates (general, research, reading, personal
-  growth, business) or from a purpose and page types you design, and won't ingest until `purpose.md`
-  is filled in.
-- Ingests many sources, up to 4 at once (one agent per source); long sources go section by
-  section and can be resumed.
-- Extracts knowledge only: front and back matter, exercises, worked examples and appendices are
-  skipped unless `purpose.md` asks for them.
-- Removes a source and the pages only it supports, with a backup in `.llm-wiki/trash/`.
-- Keeps the Obsidian graph connected and lints frontmatter, broken links and duplicate names.
-- Only adds to a vault: text that the app or you wrote is never rewritten.
 
 ## Known limits
 
