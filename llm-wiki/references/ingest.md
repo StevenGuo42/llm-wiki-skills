@@ -70,12 +70,17 @@ wiki learn something about the subject from it? Include a whole skipped category
 - Real data the source presents as evidence (an actual index, firm or episode) is not a made-up
   example. Keep it with its numbers and period.
 - Don't replace a skipped example with one of your own.
+- A real figure mixed with a made-up assumption (an actual quote, then "assume a 5% loan rate"):
+  keep the real figure and what the source concludes from it, and drop the assumption and every
+  number derived from it.
 
-To find skipped parts, check the table of contents near the top of the `text` file and Grep it for
+**Orchestrator only** (the agent running the whole ingest; a section subagent skips this paragraph):
+find skipped parts from the table of contents near the top of the `text` file and by Grepping it for
 lines like `^(Preface|Foreword|Acknowledg|About the Author|Contents|Appendix|Exercises|Problems|Review Questions|Summary|Key Terms|Solutions|Answers|Bibliography|References|Glossary|Index|Example \d|Worked Example)`.
 Read a section that lies entirely in skipped material only enough to confirm that, then mark it
-`done`. With subagents, you do this check yourself; don't start a subagent for it. List what you skipped on the source summary page ("Not ingested: front matter, end-of-chapter
-problems, Appendices A–C, index").
+`done` yourself, without a subagent. When only part of a section is skipped (e.g. it ends in a
+Solutions chapter), give the subagent just the lines to ingest. List what you skipped on the source
+summary page ("Not ingested: front matter, end-of-chapter problems, Appendices A–C, index").
 
 A long source must produce pages in proportion to its length. Don't squeeze a book into one
 pass. For **each section not in `sectionsDone`, in order**:
@@ -107,21 +112,24 @@ Sections stay sequential: a later section has to see the earlier sections' pages
 sections, do them yourself. With more than 3 sections, keep your own context small by giving each
 section to a subagent, **one at a time**. Wait for each to finish before starting the next. A
 400,000-character book takes about an hour and 1M tokens this way; tell the user before you start.
+Fix the date once at the start and use it for every page of this ingest, even past midnight.
 Brief (fill in every `…`):
 
 > You are ingesting section N of `<source>` into the LLM wiki at `<vault>`. First read
 > `<vault>/purpose.md` and `<vault>/schema.md`, then `<skill dir>/references/ingest.md` sections 2–3,
-> and follow them exactly, except: do this section yourself, don't hand it to another agent. Script:
-> `node "<skill dir>/scripts/wiki.mjs"`. Source facts: sourcesEntry=`…`, summaryLink=`…`, text
-> file `…`, lines A–B. Output language: … . Today is YYYY-MM-DD. Pages from earlier sections: … .
-> Left over from the previous section: … . Write only inside `<vault>/wiki/`. Don't write the source
-> summary page, the log, the overview or learning paths. When done, run `done` for section N and
-> reply with four lists: pages created, pages updated (path — title, one line each), what you skipped
-> (e.g. "Ex. 2.1–2.39, numbers of Examples 2.3–2.6"), and anything this section started that the next
-> section should finish.
+> and follow them exactly, except: do this section yourself, don't hand it to another agent, and skip
+> the paragraphs marked "Orchestrator only". Script: `node "<skill dir>/scripts/wiki.mjs"`. Source
+> facts: sourcesEntry=`…`, summaryLink=`…`, text file `…`, lines A–B. Output language: … . Use the
+> date YYYY-MM-DD for `created`/`updated`. Pages from earlier sections (paths): … . Left over from the
+> previous section: … . Write only inside `<vault>/wiki/`. Don't write the source summary page, the
+> log, the overview or learning paths. When done, run `done` for section N and reply with five lists:
+> pages created, pages updated (path — title, one line each), what you skipped (e.g. "Ex. 2.1–2.39,
+> numbers of Examples 2.3–2.6"), what the next section should finish, and notes for the final pass
+> (learning-path steps, overview changes, caveats for the summary).
 
-Keep the replies: the skipped lists build the summary's "Not ingested" line, and the leftovers go in
-the next brief. For page counts use `status` → `pagesFromThisSource`, not the replies' tallies.
+Keep the replies: the skipped lists build the summary's "Not ingested" line, "next section" goes in
+the next brief, and the final-pass notes wait for §4. Take the page list for each brief, and the
+page counts, from `status` → `pagesFromThisSource`, not from the replies.
 
 ## 3. Page rules
 
@@ -145,7 +153,7 @@ aliases: []
 tags: [rates, yield-curve]
 related: [expectations-hypothesis, acm-term-premium]   # bare slugs only: no [[ ]], no wiki/, no .md
 sources: ["<sourcesEntry>"]
-created: YYYY-MM-DD           # today
+created: YYYY-MM-DD           # the ingest date (fixed at its start)
 updated: YYYY-MM-DD
 ---
 ```
@@ -159,7 +167,7 @@ an item that contains a comma, bracket, colon, `#` or quote.
   logically instead of appended ("Additional info from …" headings are not allowed);
 - `type`, `title`, `created` and human-owned fields (e.g. `mastery`, `status`) keep their current values;
 - `sources` adds the `sourcesEntry` (union, no duplicates), and `related`/`tags` are unions;
-- `updated` is today.
+- `updated` is the ingest date.
 
 Only when `sourceChanged` is `true` **and** the page's `sources` list holds only this source may you
 rewrite the body from the corrected source. In every other case, including an unchanged re-ingest
@@ -170,13 +178,19 @@ and a source with no earlier record, merge. A fresh rewrite is usually shorter a
 - Keep subject boundaries. A claim, limitation or benchmark result stays on the page of the exact
   subject it is about. Don't move a claim about one model, method or person onto another because
   they share a keyword. For a comparison, write it as an explicit comparison.
-- Never invent numbers, citations, URLs, results or examples. Background facts the source doesn't
-  state (stable public knowledge) are allowed only when labelled as background, and never for numbers.
+- Never invent numbers, citations, URLs, results or examples. Anything the source doesn't state goes
+  in a paragraph that starts with **Derived (not in the source):**. That covers stable public
+  background facts and your own steps between the source's statements; never numbers. Skipped
+  material (solutions, worked examples) doesn't count as the source stating it.
+- If the schema's page template has an Example section and the source gives no example you may keep,
+  leave the section out; don't write an illustrative one. Code the schema asks for (e.g. a method's
+  implementation) is allowed if it follows the source's formula exactly and is labelled as derived.
 - Keep exact tables, formulas, schemas and code verbatim, in code blocks or tables. Extracted PDF text
-  often garbles formulas (lost fractions, subscripts, ≠). When one looks broken, read those pages of
-  the original PDF with the Read tool's `pages` option and copy it from there. If it still can't be
-  recovered, write what you are sure of and add `> [!warning] Formula reconstructed; check against
-  the source.`
+  often garbles formulas (lost fractions, subscripts, ≠). When one looks broken, re-extract those
+  pages with layout kept: `pdftotext -f <page> -l <page> -layout "<original pdf>" -`. (The Read
+  tool's `pages` option also works on PDFs, but only where `pdftoppm` is installed.) If it still can't
+  be recovered, write what you are sure of and add exactly this line under it:
+  `> [!warning] Formula reconstructed; check against the source.`
 - An entity page opens by saying what the subject is. If the source doesn't establish that, use only
   stable, well-known public facts, labelled as background. If identity is still unclear, don't
   create the page.
@@ -196,7 +210,7 @@ After all sections are done:
    questions. Write exactly one source page, and none for works the source merely cites. If a schema
    field has no value in the source (no author named, no matching `source_kind`), leave it empty or
    pick the closest value, and say so in the body; never invent it.
-2. Learning paths: create or update them now, following the schema, with this source's concepts in
+2. Learning paths: create or update them now (using the subagents' final-pass notes), following the schema, with this source's concepts in
    the source's order. Keep each path's `goal` true to all its steps; start a new path rather than
    stretching one past its goal.
 3. Update `wiki/overview.md` briefly if the source changes the big picture. Edit it; don't rewrite it.

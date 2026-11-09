@@ -986,10 +986,12 @@ function main(argv) {
       need()
       const { identity } = resolveSource(vault, args[1] ?? die("usage: wiki.mjs done <vault> <source> <section>"))
       const manifest = readManifest(vault)
+      const n = Number(args[2])
+      if (!Number.isInteger(n) || n < 1) die("usage: wiki.mjs done <vault> <source> <section>")
       const rec = (manifest[identity] ||= {})
-      rec.done = [...new Set([...(rec.done || []), Number(args[2])])].sort((a, b) => a - b)
+      rec.done = [...new Set([...(rec.done || []), n])].sort((a, b) => a - b)
       writeManifest(vault, manifest)
-      console.log(`section ${args[2]} recorded; done: ${rec.done.join(", ")} of ${rec.sections ?? "?"}`)
+      console.log(`section ${n} recorded; ${rec.done.length} of ${rec.sections ?? "?"} sections done (${rec.done.join(", ")})`)
       break
     }
     case "finalize": {
