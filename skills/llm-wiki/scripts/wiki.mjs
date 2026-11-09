@@ -367,6 +367,22 @@ function uniqueDest(dir, name) {
   return dest
 }
 
+// Some Windows pdftotext builds write characters above U+FFFF (math italic 𝛼, 𝑥…) as CESU-8:
+// two 3-byte surrogates, which decode to U+FFFD. Join each pair into one 4-byte UTF-8 character.
+export function fixCesu8(buf) {
+  const parts = []
+  let from = 0
+  for (let i = 0; i + 5 < buf.length; i++) {
+    if (buf[i] !== 0xed || (buf[i + 1] & 0xf0) !== 0xa0 || buf[i + 3] !== 0xed || (buf[i + 4] & 0xf0) !== 0xb0) continue
+    const hi = 0xd000 | ((buf[i + 1] & 0x3f) << 6) | (buf[i + 2] & 0x3f)
+    const lo = 0xd000 | ((buf[i + 4] & 0x3f) << 6) | (buf[i + 5] & 0x3f)
+    parts.push(buf.subarray(from, i), Buffer.from(String.fromCodePoint(0x10000 + ((hi - 0xd800) << 10) + (lo - 0xdc00))))
+    from = i + 6
+    i += 5
+  }
+  return from ? Buffer.concat([...parts, buf.subarray(from)]) : buf
+}
+
 function extractText(file) {
   const cache = cachePath(file)
   if (fs.existsSync(cache) && fs.statSync(cache).mtimeMs >= fs.statSync(file).mtimeMs && fs.statSync(cache).size > 0) return { cache, how: "cached" }
@@ -380,7 +396,7 @@ function extractText(file) {
     try {
       fs.copyFileSync(file, path.join(tmp, "in.pdf"))
       execFileSync("pdftotext", ["-enc", "UTF-8", path.join(tmp, "in.pdf"), path.join(tmp, "out.txt")], { stdio: ["ignore", "ignore", "pipe"] })
-      if (fs.statSync(path.join(tmp, "out.txt")).size > 0) { fs.copyFileSync(path.join(tmp, "out.txt"), cache); return { cache, how: "pdftotext" } }
+      if (fs.statSync(path.join(tmp, "out.txt")).size > 0) { fs.writeFileSync(cache, fixCesu8(fs.readFileSync(path.join(tmp, "out.txt")))); return { cache, how: "pdftotext" } }
       return { cache, how: "needs-text", reason: "pdftotext produced no text (scanned PDF?)" }
     } catch (err) {
       return { cache, how: "needs-text", reason: err.code === "ENOENT" ? "pdftotext not installed" : `pdftotext failed: ${String(err.stderr || err.message).trim().slice(0, 200)}` }

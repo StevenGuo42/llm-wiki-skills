@@ -341,6 +341,15 @@ test("init fills Obsidian's default graph.json but keeps a customized one", () =
   fs.rmSync(tmp, { recursive: true, force: true })
 })
 
+test("CESU-8 surrogate pairs from pdftotext become real UTF-8", async () => {
+  const { fixCesu8 } = await import("./wiki.mjs")
+  // pdftotext on Windows writes 𝛼 (U+1D6FC) as two 3-byte surrogates: ED A0 B5 ED BB BC
+  const cesu = Buffer.concat([Buffer.from("x = "), Buffer.from([0xed, 0xa0, 0xb5, 0xed, 0xbb, 0xbc]), Buffer.from(" + β\n")])
+  assert.equal(fixCesu8(cesu).toString("utf8"), "x = 𝛼 + β\n")
+  const plain = Buffer.from("no change: ü 期限\n")
+  assert.equal(fixCesu8(plain), plain)
+})
+
 test("parallel script calls on one vault don't lose each other's manifest updates", async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "llm-wiki-"))
   const vault = path.join(tmp, "v")
