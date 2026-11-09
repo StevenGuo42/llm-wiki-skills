@@ -6,9 +6,15 @@ articles, notes) as an Obsidian vault. The vault uses the same layout as the
 
 ## Install
 
-```bash
-cp -r llm-wiki ~/.claude/skills/llm-wiki
+In Claude Code:
+
 ```
+/plugin install llm-wiki --marketplace StevenGuo42/llm-wiki-skills
+```
+
+On Claude Code older than 2.1.275, run `/plugin marketplace add StevenGuo42/llm-wiki-skills`, then
+`/plugin install llm-wiki@llm-wiki-skills`. Or copy the skill by hand:
+`cp -r skills/llm-wiki ~/.claude/skills/llm-wiki`.
 
 Requirements: Node 18+, and `pdftotext` for PDFs (`brew install poppler`, `apt install poppler-utils`;
 on Windows the copy bundled with Git for Windows works).

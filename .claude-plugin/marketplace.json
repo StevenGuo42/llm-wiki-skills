@@ -1,0 +1,12 @@
+{
+  "name": "llm-wiki-skills",
+  "description": "LLM Wiki skill for Claude Code",
+  "owner": { "name": "StevenGuo42" },
+  "plugins": [
+    {
+      "name": "llm-wiki",
+      "source": "./",
+      "description": "Build and maintain an LLM-written knowledge graph from your sources as an Obsidian vault"
+    }
+  ]
+}

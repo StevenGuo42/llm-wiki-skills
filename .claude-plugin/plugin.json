@@ -1,0 +1,9 @@
+{
+  "name": "llm-wiki",
+  "description": "Build and maintain an LLM-written knowledge graph from your sources as an Obsidian vault (Karpathy's LLM Wiki pattern, nashsu/llm_wiki compatible)",
+  "version": "0.1.1",
+  "author": { "name": "StevenGuo42" },
+  "homepage": "https://github.com/StevenGuo42/llm-wiki-skills",
+  "repository": "https://github.com/StevenGuo42/llm-wiki-skills",
+  "license": "GPL-3.0-only"
+}
